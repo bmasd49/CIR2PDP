@@ -51,7 +51,13 @@ class Signal:
         marker = 's'
         markersize = 5.
         if expected_distance <= 0.:
-            ax.plot(self.distance_ticks, self.normalized_power_delay_profile(), 'r_')
+            ax.plot(self.distance_ticks, 
+                    self.normalized_power_delay_profile(),
+                    color = 'red',
+                    linestyle = 'None',
+                    marker = marker,
+                    markersize = markersize,
+                    )
         else:
             ax.plot(self.distance_ticks, 
                     self.normalized_power_delay_profile(),
@@ -59,14 +65,16 @@ class Signal:
                     linestyle = 'None',
                     marker = marker,
                     markersize = markersize,
-                    label = "Experimental")
+                    label = "Experimental"
+                    )
             ax.plot(self.distance_ticks, 
                     self.theoretical_power_delay_profile(expected_distance), 
                     color = 'blue',
                     linestyle = 'None',
                     marker = marker,
                     markersize = markersize,
-                    label = "Theoretical")
+                    label = "Theoretical"
+                    )
             ax.legend()
         plt.savefig(output_file, dpi=300)
         plt.close()
