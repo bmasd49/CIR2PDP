@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 from scipy import fft, constants, signal, interpolate
 import matplotlib.pyplot as plt
@@ -44,14 +45,28 @@ class Signal:
     def visualize(self, output_file, expected_distance = 0.):
         _, ax = plt.subplots()
         ax.set_title(r'Power Delay Profile vs Delay $\times$ Speed of light')
-        ax.set_xlim(left=0, right=5)
+        ax.set_xlim(left=0, right=3.5)
         ax.set_xlabel(r"Delay $\times$ Speed of light [m]")
         ax.set_ylabel("Normalized power delay profile [dB]")
+        marker = 's'
+        markersize = 5.
         if expected_distance <= 0.:
-            ax.plot(self.distance_ticks, self.normalized_power_delay_profile(), 'r.')
+            ax.plot(self.distance_ticks, self.normalized_power_delay_profile(), 'r_')
         else:
-            ax.plot(self.distance_ticks, self.normalized_power_delay_profile(), 'r.', label = "Experimental")
-            ax.plot(self.distance_ticks, self.theoretical_power_delay_profile(expected_distance), 'b.', label = "Theoretical")
+            ax.plot(self.distance_ticks, 
+                    self.normalized_power_delay_profile(),
+                    color = 'red',
+                    linestyle = 'None',
+                    marker = marker,
+                    markersize = markersize,
+                    label = "Experimental")
+            ax.plot(self.distance_ticks, 
+                    self.theoretical_power_delay_profile(expected_distance), 
+                    color = 'blue',
+                    linestyle = 'None',
+                    marker = marker,
+                    markersize = markersize,
+                    label = "Theoretical")
             ax.legend()
         plt.savefig(output_file, dpi=300)
         plt.close()
@@ -62,7 +77,6 @@ def main():
     parser.add_argument("-o", "--output_file", type=str, action="store", metavar='csv', help = "Desired output file name", default='out.png')
     parser.add_argument("-c", "--calibration_file", type=str, action="store", metavar='csv', help = "Calibration signal from VNA (Ventor Network Analyzer)", required=True)
     parser.add_argument("-e", "--expected_distance", type=float, action="store", metavar="distance in meter", help="expected distance between Transmitter and Receiver", default=0.)
-    # signal = Signal('../Experiment/BM2/2nd-c30Gs2G-80cm.csv', '../Experiment/BM2/2nd-c30Gs2G-0cm.csv')
     args = vars(parser.parse_args())
     signal = Signal(args["input_file"], args["calibration_file"])
     signal.visualize(output_file= args["output_file"], expected_distance = args["expected_distance"])
