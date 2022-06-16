@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 import numpy as np
-from scipy import fft, constants, signal, interpolate
+from scipy import fft, constants
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
+from pathlib import Path
 from argparse import ArgumentParser
 
 
 class Signal:
     def __init__(self, main_file, calibration_file):
+        self.name = main_file.stem
         self.raw_data = \
             pd.read_csv(main_file, skiprows=2, usecols=range(3)).to_numpy()
         self.calibration_data = \
@@ -55,7 +58,7 @@ class Signal:
         return interpolated_distance_ticks, interpolated_PDP
         
     def visualize(self, 
-            output_file = 'out.png', 
+            output_file = 'out', 
             expected_distance = 0.,
             interpolation = True,
             interpolation_res = 0.01, 
@@ -131,7 +134,7 @@ class Signal:
                     label = "Theoretical calculation"
             )
             ax.legend()
-        plt.savefig(output_file, dpi=300)
+        plt.savefig(output_file + self.name + '.png', dpi=300)
         plt.close()
         
 def main():
@@ -140,8 +143,16 @@ def main():
             type=str, 
             action="store", 
             metavar='csv', 
-            help = "Measurement signal from VNA (Ventor Network Analyzer)", 
-            required=True)
+            help = "Measurement signal from VNA (Ventor Network Analyzer)",
+            default=''
+            )
+    parser.add_argument("-f", "--input_folder", 
+            type=str, 
+            action="store", 
+            metavar='folder', 
+            help = "Folder containing measurement signal from VNA (Ventor Network Analyzer)",
+            default=''
+            )
     parser.add_argument("-c", "--calibration_file", 
             type=str, 
             action="store", 
@@ -153,7 +164,7 @@ def main():
             action="store", 
             metavar='csv', 
             help = "Desired output file name", 
-            default='out.png')
+            default='out')
     parser.add_argument("-e", "--expected_distance", 
             type=float, 
             action="store", 
@@ -179,26 +190,36 @@ def main():
             type=float, 
             action="store", 
             metavar="distance in meter", 
-            help="right side of the delay graph", default=4.)
+            help="right side of the delay graph", 
+            default=4.)
 
     args = vars(parser.parse_args())
-    signal = Signal(args["input_file"], args["calibration_file"])
-    signal.visualize(
-            output_file = args["output_file"],
-            expected_distance = args["expected_distance"],
-            interpolation = not args["no_interpolation"],
-            interpolation_res = args["interpolation_res"],
-            min_tick = args["minimum_range"],
-            max_tick = args["maximum_range"]
-            )
+    if len(args["input_file"]) > 0:
+        input_files = [Path(args["input_file"])]
+    else:
+        if len(args["input_folder"]) == 0:
+            raise ValueError("Need to provide either file or folder input")
+        else:
+            input_files = list(Path(args["input_folder"]).glob('*.csv'))
+
+    for input_file in input_files:
+        signal = Signal(input_file, args["calibration_file"])
+        signal.visualize(
+                output_file = args["output_file"],
+                expected_distance = args["expected_distance"],
+                interpolation = not args["no_interpolation"],
+                interpolation_res = args["interpolation_res"],
+                min_tick = args["minimum_range"],
+                max_tick = args["maximum_range"]
+                )
+
     print(f"Input signal file: {args['input_file']}.")
     print(f"Input calibration file: {args['calibration_file']}.")
     if args["expected_distance"] > 0.:
         print(f"Using theoretical calculation with expected distance of {args['expected_distance']} m.")
-    print(f"Distance on x-axis between adjacent discrete points: {signal.distance_rate:.4f} m.")
-    print(f"Distance resolution after interpolation: {args['interpolation_res']} m.")
+    # print(f"Distance resolution after interpolation: {args['interpolation_res']} m.")
     print(f"x-axis spans from {args['minimum_range']} m to {args['maximum_range']} m.")
-    print(f"Output file: {args['output_file']}.")
+    print(f"Output file/directory: {args['output_file']}.")
 
 if __name__=='__main__':
     main()
